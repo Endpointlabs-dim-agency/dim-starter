@@ -55,14 +55,38 @@ provisioning completes (usually seconds).
 `lib/supabase/*` exists for projects provisioned with Supabase (env vars
 `NEXT_PUBLIC_SUPABASE_URL` etc.). Use it only when those vars are present.
 
-## Auth
+## Auth (Neon Auth — @neondatabase/auth, preinstalled)
 
 Only when the app truly needs login. If the database was provisioned with
-`needsAuth`, auth env vars are injected alongside `DATABASE_URL` — check
-`.env.local` for which provider (Neon Auth vars or the Supabase trio) and
-follow that provider's standard Next.js integration. Email/password and
-magic links only — never add third-party OAuth providers (they need
-credentials the platform doesn't hold).
+`needsAuth`, these env vars appear in `.env.local`: `NEON_AUTH_BASE_URL`,
+`NEON_AUTH_COOKIE_SECRET` (plus `NEON_AUTH_JWKS_URL`). Recipe:
+
+1. `lib/auth/server.ts`:
+   ```ts
+   import { createNeonAuth } from "@neondatabase/auth/next/server";
+   export const auth = createNeonAuth({
+     baseUrl: process.env.NEON_AUTH_BASE_URL!,
+     cookies: { secret: process.env.NEON_AUTH_COOKIE_SECRET! },
+   });
+   ```
+2. `app/api/auth/[...path]/route.ts`:
+   ```ts
+   import { auth } from "@/lib/auth/server";
+   export const { GET, POST } = auth.handler();
+   ```
+3. Sign up / sign in / session / sign out via the same SDK's client and
+   server helpers (email + password). Read the current user server-side
+   through `auth` in server components/actions; gate private pages on it.
+4. User records live in the database's `neon_auth` schema (`users_sync`
+   table) — reference them from your own tables by user id; do NOT create
+   your own users/passwords tables.
+
+If the env vars are missing but the app needs login, call
+`request_database` with `needsAuth: true` (works even when the database
+already exists). Email/password only — never add third-party OAuth
+providers (they need credentials the platform doesn't hold). If the
+Supabase trio is present instead, use Supabase Auth per its standard
+Next.js integration.
 
 ## File uploads
 
