@@ -143,6 +143,25 @@ production) and `@vercel/blob` is preinstalled. Recipe:
 - If the token is genuinely absent (legacy project), fall back to a
   "storage connects when published" placeholder and say so in the UI.
 
+## Scheduled jobs (Vercel Cron)
+
+Recurring work (daily digests, cleanup, reminders, syncs) uses Vercel Cron
+— no extra infrastructure:
+
+1. Route handler at `app/api/cron/<job>/route.ts` (GET). Guard it:
+   in production, reject unless
+   `request.headers.get("authorization") === \`Bearer \${process.env.CRON_SECRET}\``
+   (the platform injects CRON_SECRET; Vercel sends it automatically).
+   Skip the check when `process.env.NODE_ENV !== "production"` so it's
+   testable in dev.
+2. Register it in `vercel.json` at the repo root:
+   `{ "crons": [{ "path": "/api/cron/<job>", "schedule": "0 9 * * *" }] }`
+   (UTC cron syntax; keep to a few jobs).
+3. Crons run ONLY on the production deployment — say so in the UI copy if
+   the user asks why nothing fires on the draft site.
+4. Keep handlers idempotent and fast (<60s); do the work directly in the
+   handler with lib/db.ts / lib/ai.ts as needed.
+
 ## Hard rules
 
 - No payment processors or credentialed external services — build the flow
