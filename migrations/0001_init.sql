@@ -8,8 +8,6 @@ create table if not exists notes (
   created_at timestamptz not null default now()
 );
 
--- A private storage bucket for file uploads (e.g. for AI features that read
--- files). Access is governed by storage policies; add them as needed.
-insert into storage.buckets (id, name, public)
-values ('uploads', 'uploads', false)
-on conflict (id) do nothing;
+-- File uploads use Vercel Blob (see CLAUDE.md "File uploads") — no storage
+-- tables are needed here. This migration must stay plain Postgres: it runs
+-- against Neon, which has no Supabase-specific schemas.
