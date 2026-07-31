@@ -111,6 +111,24 @@ providers (they need credentials the platform doesn't hold). If the
 Supabase trio is present instead, use Supabase Auth per its standard
 Next.js integration.
 
+## AI features (keyless — use lib/ai.ts)
+
+This app can use AI with NO API key setup: `lib/ai.ts` calls the
+EndpointLabs gateway using `ENDPOINTLABS_AI_KEY` (already injected by the
+platform in both preview and production).
+
+- `await ai("prompt")` or `await ai(messages, { system, model })` → text.
+  Models: `"fast"` (default — use it unless reasoning is genuinely hard)
+  or `"smart"`.
+- `aiStream(...)` returns the raw SSE Response (Anthropic Messages
+  streaming format) for chat UIs — pipe it through a route handler.
+- SERVER-SIDE ONLY (server actions / route handlers). Never import in a
+  client component; never send the key to the browser.
+- Requests are capped per day per app — handle errors with a friendly
+  message rather than retrying in a loop.
+- Never ask the user for an Anthropic/OpenAI key and never install AI SDKs
+  — the helper is the whole integration.
+
 ## File uploads
 
 No object storage is wired by default. If the user asks for uploads, prefer
