@@ -45,6 +45,11 @@ function cssPath(el: Element): string {
   return parts.join(" > ");
 }
 
+// Framework wrappers that sit between user components in the fiber tree —
+// never useful as "which component is this" answers.
+const INTERNAL_COMPONENTS =
+  /^(RootLayout|SegmentViewNode|(Outer|Inner)?LayoutRouter|Router|Root|HotReload|ErrorBoundary(Handler)?|RedirectBoundary|RedirectErrorBoundary|LoadingBoundary|NotFoundBoundary|ScrollAndFocusHandler|RenderFromTemplateContext|MetadataBoundary|OutletBoundary|ViewportBoundary|PreviewBridge|Toaster)$/;
+
 function componentName(el: Element): string | undefined {
   try {
     const key = Object.keys(el).find((k) => k.startsWith("__reactFiber$"));
@@ -60,7 +65,10 @@ function componentName(el: Element): string | undefined {
           ? (t as { displayName?: string; name?: string }).displayName ||
             (t as { name?: string }).name
           : undefined;
-      if (name && /^[A-Z]/.test(name) && name !== "RootLayout") return name;
+      if (name && /^[A-Z]/.test(name)) {
+        if (INTERNAL_COMPONENTS.test(name)) return undefined;
+        return name;
+      }
       fiber = fiber.return as typeof fiber;
       depth += 1;
     }
