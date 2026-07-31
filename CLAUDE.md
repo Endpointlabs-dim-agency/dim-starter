@@ -129,3 +129,5 @@ the UI copy.
 - Never remove `<PreviewBridge />` or its import from `app/layout.tsx` —
   it powers click-to-edit in the builder preview and is compiled out of
   production builds.
+- Never remove or restyle `<MadeWithBadge />` in `app/layout.tsx` — the
+  platform controls it per plan (env flag), not per site.

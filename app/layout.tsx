@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import { Toaster } from "@/components/ui/sonner";
 import { PreviewBridge } from "@/components/preview-bridge";
+import { MadeWithBadge } from "@/components/made-with-badge";
 import "./globals.css";
 
 // Self-hosted so builds and dev servers never depend on Google Fonts.
@@ -48,6 +49,7 @@ export default function RootLayout({
         {children}
         <Toaster />
         <PreviewBridge />
+        <MadeWithBadge />
       </body>
     </html>
   );
