@@ -126,3 +126,6 @@ the UI copy.
 - Verify with `npx tsc --noEmit` once at the end. No `npm run build`, no
   `npm install` unless you added a dependency.
 - No README/docs/tests unless asked. Commit your work when done.
+- Never remove `<PreviewBridge />` or its import from `app/layout.tsx` —
+  it powers click-to-edit in the builder preview and is compiled out of
+  production builds.
