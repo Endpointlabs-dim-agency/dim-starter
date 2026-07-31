@@ -129,12 +129,19 @@ platform in both preview and production).
 - Never ask the user for an Anthropic/OpenAI key and never install AI SDKs
   — the helper is the whole integration.
 
-## File uploads
+## File uploads (Vercel Blob — wired by default)
 
-No object storage is wired by default. If the user asks for uploads, prefer
-Vercel Blob if `BLOB_READ_WRITE_TOKEN` is present; otherwise build the flow
-with a clear "storage connects when published" placeholder and say so in
-the UI copy.
+`BLOB_READ_WRITE_TOKEN` is injected by the platform (preview and
+production) and `@vercel/blob` is preinstalled. Recipe:
+
+- Server route or action: `import { put } from "@vercel/blob"` →
+  `const blob = await put(file.name, file, { access: "public",
+  addRandomSuffix: true })` → persist `blob.url` (e.g. in the database).
+- Keep uploads ≤ 4.5MB through server routes (platform body limit); use
+  `<input type="file" accept=…>` with clear size copy.
+- Validate type/size server-side. Never expose the token to the browser.
+- If the token is genuinely absent (legacy project), fall back to a
+  "storage connects when published" placeholder and say so in the UI.
 
 ## Hard rules
 
