@@ -129,6 +129,28 @@ platform in both preview and production).
 - Never ask the user for an Anthropic/OpenAI key and never install AI SDKs
   — the helper is the whole integration.
 
+## Transactional email (keyless — use lib/email.ts)
+
+This app can send real email with NO setup: `lib/email.ts` calls the
+EndpointLabs email gateway using the app's identity key (already injected
+in both preview and production). The sender address is fixed by the
+platform — this app's own address on `mail.endpointlabs.app` — so there is
+nothing to configure.
+
+- `await sendEmail({ to, subject, html?, text?, replyTo? })` → `{ id }`.
+  Up to 5 recipients per send. Set `replyTo` to the business owner's real
+  address whenever replies are expected.
+- TRANSACTIONAL ONLY: confirmations, receipts, form notifications,
+  reminders — mail a specific user action just triggered. Never bulk or
+  marketing sends, never loop over a mailing list.
+- Sends are capped per day per app. `sendEmail` throws with a friendly
+  message on failure — catch it and keep the main action successful
+  (e.g. "your booking is saved, but the confirmation email didn't send").
+- SERVER-SIDE ONLY (server actions / route handlers). Never import in a
+  client component.
+- Never ask the user for a Resend/SendGrid/SMTP key or a sending domain —
+  the helper is the whole integration.
+
 ## File uploads (Vercel Blob — wired by default)
 
 `BLOB_READ_WRITE_TOKEN` is injected by the platform (preview and
