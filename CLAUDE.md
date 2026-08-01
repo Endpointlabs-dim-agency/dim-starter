@@ -152,6 +152,9 @@ account. The `stripe` package is preinstalled and `lib/stripe.ts` exposes
   \`\${origin}/success?session_id={CHECKOUT_SESSION_ID}\`, cancel_url:
   origin })`. Amounts are integer CENTS. For subscriptions use
   `mode: "subscription"` with a recurring `price_data`.
+- **Never pass `payment_method_types`** — Stripe accounts with Managed
+  Payments (the default on new accounts) reject it with "Unsupported
+  parameter". Let Stripe choose the payment methods.
 - **Success page verifies server-side** before granting anything:
   retrieve the session by id and check `payment_status === "paid"` —
   never trust the redirect alone.
