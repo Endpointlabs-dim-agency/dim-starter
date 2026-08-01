@@ -129,6 +129,42 @@ platform in both preview and production).
 - Never ask the user for an Anthropic/OpenAI key and never install AI SDKs
   — the helper is the whole integration.
 
+## Payments (Stripe — the owner's own account, use lib/stripe.ts)
+
+This app can take real card payments through the owner's own Stripe
+account. The `stripe` package is preinstalled and `lib/stripe.ts` exposes
+`stripeConfigured()` + `getStripe()`.
+
+- **The key never travels through chat.** `STRIPE_SECRET_KEY` is added by
+  the owner in the builder's **Keys panel** (the key icon in the top bar).
+  If a payments feature is requested, build the FULL flow now and tell the
+  owner (in the UI and your summary): "Add your Stripe secret key as
+  STRIPE_SECRET_KEY in the Keys panel to go live" — never ask them to
+  paste a key to you, never hardcode or placeholder one.
+- When `stripeConfigured()` is false, every payment surface shows a
+  friendly "Connect Stripe to enable payments" state; the rest of the app
+  works normally.
+- **Checkout recipe** (one-time payments, deposits, orders): a server
+  action or route creates a Checkout Session and redirects to it —
+  `getStripe().checkout.sessions.create({ mode: "payment", line_items:
+  [{ price_data: { currency: "usd", product_data: { name }, unit_amount:
+  cents }, quantity }], success_url:
+  \`\${origin}/success?session_id={CHECKOUT_SESSION_ID}\`, cancel_url:
+  origin })`. Amounts are integer CENTS. For subscriptions use
+  `mode: "subscription"` with a recurring `price_data`.
+- **Success page verifies server-side** before granting anything:
+  retrieve the session by id and check `payment_status === "paid"` —
+  never trust the redirect alone.
+- **Webhook (only when needed** — subscriptions, async fulfillment):
+  route at `app/api/webhooks/stripe/route.ts` verifying the signature via
+  `getStripe().webhooks.constructEvent(rawBody, sig,
+  process.env.STRIPE_WEBHOOK_SECRET!)`; the owner adds
+  `STRIPE_WEBHOOK_SECRET` through the Keys panel after creating the
+  endpoint in their Stripe dashboard. Prefer the success-page
+  verification for simple one-time payments — it needs no webhook setup.
+- Test mode works end to end with card `4242 4242 4242 4242` (any future
+  expiry, any CVC) when the owner adds a test-mode key (`sk_test_…`).
+
 ## Transactional email (keyless — use lib/email.ts)
 
 This app can send real email with NO setup: `lib/email.ts` calls the
@@ -186,8 +222,10 @@ Recurring work (daily digests, cleanup, reminders, syncs) uses Vercel Cron
 
 ## Hard rules
 
-- No payment processors or credentialed external services — build the flow
-  without live processing (e.g. "pay in person") so the user can upgrade later.
+- Payments go through the Stripe recipe above — never another processor.
+  Other credentialed external services follow the same pattern: code
+  against `process.env.SERVICE_KEY_NAME` and tell the owner to add that
+  exact name in the builder's Keys panel. Never ask for a key in chat.
 - Never invent, hardcode, or placeholder secrets.
 - Verify with `npx tsc --noEmit` once at the end. No `npm run build`, no
   `npm install` unless you added a dependency.
