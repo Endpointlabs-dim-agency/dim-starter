@@ -219,3 +219,11 @@
     @apply bg-background text-foreground font-sans antialiased;
   }
 }
+
+/* The builder preview runs `next dev`; Next's dev-tools overlay (the red
+   "N Issues" pill) is developer chrome the app owner must never see —
+   build/runtime problems surface through the builder's own feed instead.
+   Dev-only element, so production is unaffected. */
+nextjs-portal {
+  display: none !important;
+}
