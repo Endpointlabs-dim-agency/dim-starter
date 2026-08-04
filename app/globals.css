@@ -218,6 +218,19 @@
   body {
     @apply bg-background text-foreground font-sans antialiased;
   }
+  /* Anchor-nav polish: sticky navbars are the default block, so in-page
+     links must scroll smoothly and land BELOW the bar, never under it. */
+  html {
+    scroll-behavior: smooth;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+  }
+  [id] {
+    scroll-margin-top: 5.5rem;
+  }
 }
 
 /* The builder preview runs `next dev`; Next's dev-tools overlay (the red
