@@ -78,6 +78,45 @@ provisioning completes (usually seconds).
 `lib/supabase/*` exists for projects provisioned with Supabase (env vars
 `NEXT_PUBLIC_SUPABASE_URL` etc.). Use it only when those vars are present.
 
+## Owner pages — REQUIRED gate on collected data (never skip this)
+
+Any page, section, route handler, or server action that **displays, lists,
+exports, or manages data collected from visitors or users** — waitlist
+entries, form submissions, contact messages, bookings, orders, uploads,
+customer lists, anything a stranger typed into the app — is an OWNER
+surface. Rendering it on a public URL leaks the owner's customers' personal
+data. This is a hard security rule, not a style preference:
+
+1. **Pages**: wrap the page content in `<OwnerGate>` from
+   `@/components/owner-gate`:
+   ```tsx
+   import { OwnerGate } from "@/components/owner-gate";
+   export default function InboxPage() {
+     return <OwnerGate title="Submissions">{/* owner-only UI */}</OwnerGate>;
+   }
+   ```
+   It renders the passcode screen to everyone except the verified owner,
+   server-side — the data never reaches a non-owner's browser.
+2. **Server actions** that READ or EXPORT collected data: call
+   `await requireOwner()` (from `@/lib/owner-auth`) first. Actions that
+   only INSERT a visitor's own submission (the public form handler) stay
+   public.
+3. **Route handlers** (CSV export, JSON endpoints): check
+   `if (!(await isOwner())) return new Response("Unauthorized", { status: 401 })`.
+4. The passcode is `OWNER_PASSCODE`, injected by the platform — the owner
+   finds it in their workspace **Keys panel**. Never print it, log it,
+   commit it, or ask for it in chat; when you build an owner page, tell the
+   owner in your summary: "your owner passcode is in the Keys panel".
+5. If the app has real user accounts (Neon Auth below), per-user data is
+   scoped to its user — but the ADMIN view across users/submissions still
+   uses `<OwnerGate>` unless you build a proper owner role.
+6. Whole-app admin tools (a CRM or booking manager where every page is
+   owner data) get the gate at the layout level once real data flows —
+   wrap the layout's children in `<OwnerGate>`.
+
+Public marketing pages, menus, galleries, and content the OWNER authored
+for the public stay public — the gate is for data OTHER people submitted.
+
 ## Auth (Neon Auth — @neondatabase/auth, preinstalled)
 
 Only when the app truly needs login. If the database was provisioned with
@@ -233,6 +272,8 @@ Recurring work (daily digests, cleanup, reminders, syncs) uses Vercel Cron
   against `process.env.SERVICE_KEY_NAME` and tell the owner to add that
   exact name in the builder's Keys panel. Never ask for a key in chat.
 - Never invent, hardcode, or placeholder secrets.
+- Collected/submitted data is NEVER rendered on an unauthenticated route —
+  see "Owner pages" above. `<OwnerGate>` is mandatory, not optional.
 - Verify with `npx tsc --noEmit` once at the end. No `npm run build`, no
   `npm install` unless you added a dependency.
 - No README/docs/tests unless asked. Commit your work when done.
