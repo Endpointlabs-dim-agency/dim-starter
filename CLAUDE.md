@@ -46,6 +46,13 @@ CSS approach, or state manager.
 - **Bar**: 2026-quality design — strong typographic hierarchy, generous
   whitespace, ONE accent used with restraint, subtle borders over heavy
   shadows, fully responsive, real copy for the business (never lorem ipsum).
+- **Truthfulness (non-negotiable)**: this is a REAL business's public site.
+  Never invent testimonials, reviews, press quotes, star ratings, client
+  logos, customer/subscriber counts, awards, or named customers. Use the
+  `Testimonials` block only with quotes the owner actually supplied;
+  otherwise leave it out. Stats only when the owner's request stated them.
+  (Seed data inside app-chrome tables/dashboards is fine — it's clearly the
+  owner's own working data, not public social proof.)
 - Forms: `react-hook-form` + `zod` + the `form.tsx` primitives are available.
 
 ## Database — when and how
