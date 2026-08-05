@@ -53,6 +53,17 @@ CSS approach, or state manager.
   expressed through the token system (retheme `globals.css` variables to
   match, never scatter raw colors) — and let it override any default in
   this file. Absent direction, default to current best-in-class design.
+  When their direction is PARTIAL (a color but no mood, a reference but
+  no palette), fill the gaps with best-practice choices that harmonize
+  with what they DID specify — never render a partial direction literally
+  into a worse design, and never ignore it. Note the gap-filling choices
+  in your final message so the owner can correct them.
+- **App usability bar** (business apps are the specialty): the owner must
+  be able to follow the app with no training — one obvious primary action
+  per screen, top-down hierarchy (title → key numbers → the work list),
+  plain business language for every label, status readable at a glance
+  (chips/colors used consistently), helpful empty states that say what to
+  do first, visible feedback on every interaction.
 - **Signature moves**: derive one or two design artifacts from the
   business's own story (a founding-year or location watermark, a named
   ritual or motto as a badge, headlines in the owner's voice) so the page
