@@ -44,13 +44,34 @@ CSS approach, or state manager.
     tables/forms with useState + realistic seed data so the app feels alive;
     wire persistence when a database is provisioned.
 - **Bar**: 2026-quality design — strong typographic hierarchy, generous
-  whitespace, ONE accent used with restraint, subtle borders over heavy
-  shadows, fully responsive, real copy for the business (never lorem ipsum).
+  whitespace, ONE accent used with restraint but with COMMITMENT (at least
+  one saturated accent moment per page; the minimal theme is the
+  deliberate monochrome exception), subtle borders over heavy shadows,
+  fully responsive, real copy for the business (never lorem ipsum).
+- **The owner's design direction always wins**: when a request specifies
+  colors, fonts, mood, layout, or reference styles, follow it precisely —
+  expressed through the token system (retheme `globals.css` variables to
+  match, never scatter raw colors) — and let it override any default in
+  this file. Absent direction, default to current best-in-class design.
+- **Signature moves**: derive one or two design artifacts from the
+  business's own story (a founding-year or location watermark, a named
+  ritual or motto as a badge, headlines in the owner's voice) so the page
+  feels commissioned, not templated.
+- **Imagery**: never ship bare gray/gradient rectangles as photo
+  stand-ins. Photo-hungry sections (galleries, portfolios, product shots)
+  get a DESIGNED empty state — token-tinted surface, small motif, caption
+  inviting the owner to attach their photos in chat. Photos the owner
+  attaches to a message arrive in `attached_assets/` — move them into
+  `public/` and place them with `next/image`.
 - **Truthfulness (non-negotiable)**: this is a REAL business's public site.
   Never invent testimonials, reviews, press quotes, star ratings, client
   logos, customer/subscriber counts, awards, or named customers. Use the
   `Testimonials` block only with quotes the owner actually supplied;
   otherwise leave it out. Stats only when the owner's request stated them.
+  The same applies to facts: never invent street addresses, phone numbers,
+  email addresses, opening hours, or named staff and their credentials —
+  use what the owner supplied, or ship an honest add-your-details state
+  and ask for the real values in your completion message.
   (Seed data inside app-chrome tables/dashboards is fine — it's clearly the
   owner's own working data, not public social proof.)
 - Forms: `react-hook-form` + `zod` + the `form.tsx` primitives are available.
