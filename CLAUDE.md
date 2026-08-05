@@ -60,10 +60,14 @@ CSS approach, or state manager.
   in your final message so the owner can correct them.
 - **App usability bar** (business apps are the specialty): the owner must
   be able to follow the app with no training — one obvious primary action
-  per screen, top-down hierarchy (title → key numbers → the work list),
-  plain business language for every label, status readable at a glance
-  (chips/colors used consistently), helpful empty states that say what to
-  do first, visible feedback on every interaction.
+  per screen, plain business language for every label, status readable at
+  a glance (chips/colors used consistently), helpful empty states that
+  say what to do first, visible feedback on every interaction. Lead each
+  page with what it exists to answer: dashboards with the key numbers
+  then the work list; schedules with the calendar; detail pages with the
+  record; forms with the first field. These are defaults, not a
+  straitjacket — when the page's job calls for a different shape, follow
+  the job.
 - **Signature moves**: derive one or two design artifacts from the
   business's own story (a founding-year or location watermark, a named
   ritual or motto as a badge, headlines in the owner's voice) so the page
