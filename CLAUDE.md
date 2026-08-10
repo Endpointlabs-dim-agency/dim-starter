@@ -314,6 +314,17 @@ Recurring work (daily digests, cleanup, reminders, syncs) uses Vercel Cron
 4. Keep handlers idempotent and fast (<60s); do the work directly in the
    handler with lib/db.ts / lib/ai.ts as needed.
 
+## Favicon (browser-tab icon)
+
+The template ships a neutral placeholder at `app/icon.svg` (Next serves it
+as the favicon automatically). Every real build replaces it with a mark
+for THIS business: the business initial — or one simple glyph — on the
+app's primary brand color. Keep it a rounded square (`rx` about 14 on a
+64 viewBox), high-contrast, and readable at 16px; stay SVG at
+`app/icon.svg`. Do this on the first build and again whenever the brand
+palette changes. Never leave the placeholder once the business identity
+is known.
+
 ## Hard rules
 
 - Payments go through the Stripe recipe above — never another processor.

@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Neutral placeholder favicon. Replace with a mark for this business
+       (initial or simple glyph on the brand's primary color) — see the
+       Favicon section in CLAUDE.md. -->
+  <rect width="64" height="64" rx="14" fill="#14161A"/>
+  <path d="M32 15 L36.4 27.6 L49 32 L36.4 36.4 L32 49 L27.6 36.4 L15 32 L27.6 27.6 Z" fill="#E8EAED"/>
+</svg>
