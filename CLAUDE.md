@@ -73,11 +73,17 @@ CSS approach, or state manager.
   ritual or motto as a badge, headlines in the owner's voice) so the page
   feels commissioned, not templated.
 - **Imagery**: never ship bare gray/gradient rectangles as photo
-  stand-ins. Photo-hungry sections (galleries, portfolios, product shots)
-  get a DESIGNED empty state — token-tinted surface, small motif, caption
-  inviting the owner to attach their photos in chat. Photos the owner
-  attaches to a message arrive in `attached_assets/` — move them into
-  `public/` and place them with `next/image`.
+  stand-ins. When the owner ASKS for imagery and the subject is GENERIC
+  (destinations, cityscapes, nature, food categories, lifestyle scenes),
+  use relevant free stock images — and VERIFY every external image URL
+  resolves (`curl -sI` → 200) before committing it; a dead link ships a
+  broken-looking page. Subjects representing the owner's REAL business
+  (their staff, their own dishes/products, their portfolio work) are
+  never stock: those sections get a DESIGNED empty state — token-tinted
+  surface, small motif, caption inviting the owner to attach their
+  photos in chat. Photos the owner attaches to a message arrive in
+  `attached_assets/` — move them into `public/` and place them with
+  `next/image`.
 - **Truthfulness (non-negotiable)**: this is a REAL business's public site.
   Never invent testimonials, reviews, press quotes, star ratings, client
   logos, customer/subscriber counts, awards, or named customers. Use the
