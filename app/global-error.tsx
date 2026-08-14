@@ -22,14 +22,24 @@ export default function GlobalError({
 }) {
   useEffect(() => {
     if (process.env.NODE_ENV !== "development") return;
-    if (window.parent === window) return;
+    // Flag read by PreviewBridge's heartbeat so it never reports "ok"
+    // while an error screen is mounted (window error events go quiet
+    // after the initial throw, but the app is still broken).
+    (window as unknown as Record<string, unknown>).__eplAppError = true;
+    if (window.parent === window)
+      return () => {
+        delete (window as unknown as Record<string, unknown>).__eplAppError;
+      };
     const report = () => {
       for (const origin of ALLOWED_PARENTS)
         window.parent.postMessage({ type: "epl-app-error" }, origin);
     };
     report();
     const iv = setInterval(report, 2500);
-    return () => clearInterval(iv);
+    return () => {
+      clearInterval(iv);
+      delete (window as unknown as Record<string, unknown>).__eplAppError;
+    };
   }, []);
 
   return (

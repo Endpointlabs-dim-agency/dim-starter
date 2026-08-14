@@ -132,7 +132,14 @@ export function PreviewBridge() {
     window.addEventListener("error", onError);
     window.addEventListener("unhandledrejection", onError);
     const heartbeat = setInterval(() => {
-      if (Date.now() - lastErrorAt > 6000) report("epl-app-ok");
+      // Error screens set __eplAppError while mounted — window error
+      // events go quiet after the initial throw, but the app is still
+      // broken; never report ok while one is up.
+      const errorScreenUp = Boolean(
+        (window as unknown as Record<string, unknown>).__eplAppError,
+      );
+      if (!errorScreenUp && Date.now() - lastErrorAt > 6000)
+        report("epl-app-ok");
     }, 2500);
     return () => {
       mo.disconnect();
