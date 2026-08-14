@@ -91,6 +91,57 @@ function describe(el: Element): SelectedElement {
 }
 
 export function PreviewBridge() {
+  // Dev-chrome suppression + app-error reporting (2026-08-14, from
+  // Michelle's feedback — she screenshotted raw Next error overlays twice
+  // in two days). Next's dev error overlay, "N Issues" pill, and devtools
+  // are developer chrome the app owner must never see; build problems
+  // surface through the builder's own feed. The globals.css nextjs-portal
+  // rule alone cannot win on Next 15.5: the overlay wrapper carries inline
+  // styles and Next re-appends the portal via its own MutationObserver if
+  // removed — so hide with inline !important styles (which beat
+  // everything) and never REMOVE the nodes. DO NOT REMOVE this block.
+  useEffect(() => {
+    if (process.env.NODE_ENV !== "development") return;
+    const hide = (el: Element) =>
+      (el as HTMLElement).style.setProperty("display", "none", "important");
+    const sweep = () => {
+      document
+        .querySelectorAll("nextjs-portal, [data-nextjs-dev-overlay]")
+        .forEach(hide);
+    };
+    sweep();
+    const mo = new MutationObserver(sweep);
+    mo.observe(document.body, { childList: true });
+
+    // Error-state reporting to the builder workspace: while a build is
+    // rewiring files the dev server briefly serves broken intermediate
+    // states — the host masks the preview with calm copy on
+    // epl-app-error and lifts it on epl-app-ok. Posting to a non-matching
+    // targetOrigin is silently dropped, so reporting to every allowed
+    // parent is safe.
+    if (window.parent === window) return () => mo.disconnect();
+    let lastErrorAt = 0;
+    const report = (type: string) => {
+      for (const origin of ALLOWED_PARENTS)
+        window.parent.postMessage({ type }, origin);
+    };
+    const onError = () => {
+      lastErrorAt = Date.now();
+      report("epl-app-error");
+    };
+    window.addEventListener("error", onError);
+    window.addEventListener("unhandledrejection", onError);
+    const heartbeat = setInterval(() => {
+      if (Date.now() - lastErrorAt > 6000) report("epl-app-ok");
+    }, 2500);
+    return () => {
+      mo.disconnect();
+      window.removeEventListener("error", onError);
+      window.removeEventListener("unhandledrejection", onError);
+      clearInterval(heartbeat);
+    };
+  }, []);
+
   useEffect(() => {
     if (process.env.NODE_ENV !== "development") return;
     if (window.parent === window) return;

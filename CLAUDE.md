@@ -338,7 +338,14 @@ is known.
   `npm install` unless you added a dependency.
 - No README/docs/tests unless asked. Commit your work when done.
 - Never remove `<PreviewBridge />` or its import from `app/layout.tsx` —
-  it powers click-to-edit in the builder preview and is compiled out of
-  production builds.
+  it powers click-to-edit in the builder preview, hides Next's dev error
+  overlay (developer chrome the owner must never see), and reports app
+  errors to the builder so the preview can mask broken mid-build states.
+  It is compiled out of production builds.
+- Never remove or rewrite `app/error.tsx` or `app/global-error.tsx` into
+  technical output — they replace Next's raw "Application error" screens
+  with calm copy the site owner (and their visitors) can see. Keep them
+  free of stack traces, hostnames, and jargon. Restyling them to match the
+  site's design is fine; keep the postMessage error reporting intact.
 - Never remove or restyle `<MadeWithBadge />` in `app/layout.tsx` — the
   platform controls it per plan (env flag), not per site.
