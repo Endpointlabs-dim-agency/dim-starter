@@ -327,6 +327,15 @@ is known.
 
 ## Hard rules
 
+- Server/client boundary (a real customer's first build shipped broken on
+  this): NEVER pass a function as a prop from a server component to a
+  client component — render props, table column `render` functions,
+  callbacks, event handlers. It type-checks clean but crashes the page at
+  runtime AND fails the production build. Any page that hands functions to
+  an interactive component (a DataTable with render columns, charts, forms
+  with callbacks) must itself start with `"use client"`. Plain data
+  (strings, numbers, arrays, objects) crosses the boundary fine; functions
+  never do.
 - Payments go through the Stripe recipe above — never another processor.
   Other credentialed external services follow the same pattern: code
   against `process.env.SERVICE_KEY_NAME` and tell the owner to add that
