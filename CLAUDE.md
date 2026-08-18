@@ -136,14 +136,17 @@ provisioning completes (usually seconds).
 `lib/supabase/*` exists for projects provisioned with Supabase (env vars
 `NEXT_PUBLIC_SUPABASE_URL` etc.). Use it only when those vars are present.
 
-## Owner pages — REQUIRED gate on collected data (never skip this)
+## Owner pages — REQUIRED gate on personal data (never skip this)
 
 Any page, section, route handler, or server action that **displays, lists,
-exports, or manages data collected from visitors or users** — waitlist
+exports, or manages personal data** is an OWNER surface — no matter who
+entered that data. That covers data collected from visitors (waitlist
 entries, form submissions, contact messages, bookings, orders, uploads,
-customer lists, anything a stranger typed into the app — is an OWNER
-surface. Rendering it on a public URL leaks the owner's customers' personal
-data. This is a hard security rule, not a style preference:
+customer lists) AND the owner's own records (their calendar, schedule,
+clients, notes, finances, family details). The test is "would this embarrass
+or endanger someone if a stranger with the URL read it, or changed it?",
+never "who typed it in". Rendering it on a public URL exposes it to anyone
+with the link. This is a hard security rule, not a style preference:
 
 1. **Pages**: wrap the page content in `<OwnerGate>` from
    `@/components/owner-gate`:
@@ -155,10 +158,15 @@ data. This is a hard security rule, not a style preference:
    ```
    It renders the passcode screen to everyone except the verified owner,
    server-side — the data never reaches a non-owner's browser.
-2. **Server actions** that READ or EXPORT collected data: call
-   `await requireOwner()` (from `@/lib/owner-auth`) first. Actions that
-   only INSERT a visitor's own submission (the public form handler) stay
-   public.
+2. **Server actions**: call `await requireOwner()` (from `@/lib/owner-auth`)
+   first — on reads and exports AND on every action that creates, edits or
+   deletes stored data. An ungated delete is worse than an ungated read:
+   a stranger with the URL can wipe the owner's records. The ONLY actions
+   that stay public are ones inserting a visitor's OWN submission (the
+   public contact/waitlist form handler).
+   Secret-URL feeds whose token IS the credential (ICS calendar feeds,
+   unsubscribe links) need no gate — but never render such a token on an
+   ungated page, or the secret stops being secret.
 3. **Route handlers** (CSV export, JSON endpoints): check
    `if (!(await isOwner())) return new Response("Unauthorized", { status: 401 })`.
 4. The passcode is `OWNER_PASSCODE`, injected by the platform — the owner
