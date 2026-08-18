@@ -24,7 +24,15 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "bad request" }, { status: 400 });
   if (!safeEqual(token, ownerSessionToken(passcode)))
     return NextResponse.json({ error: "invalid token" }, { status: 401 });
-  const res = NextResponse.redirect(new URL(dest, req.url), 303);
+  // Relative Location on purpose: an absolute URL built from req.url points
+  // at the server's own bind address behind a proxy (the live-preview dev
+  // server sees 0.0.0.0:3000), which sent the browser to a dead origin. The
+  // browser resolves a relative redirect against the host it is already on,
+  // which is correct on every host this app serves from.
+  const res = new NextResponse(null, {
+    status: 303,
+    headers: { Location: dest },
+  });
   res.cookies.set(OWNER_COOKIE, ownerSessionToken(passcode), {
     httpOnly: true,
     secure: true,
