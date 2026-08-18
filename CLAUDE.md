@@ -123,6 +123,15 @@ provisioning completes (usually seconds).
    Server components, server actions, and route handlers only.
 4. Destructive changes (dropping tables/columns, incompatible type changes)
    need explicit user confirmation first.
+5. A migration may only use functions that exist on a stock Postgres
+   database, or it must create the extension it needs itself. `pgcrypto` is
+   enabled in `0001_init.sql`, so `gen_random_bytes`/`crypt`/`digest`/`hmac`
+   are available here — but never assume an extension in a repo that predates
+   that, add `create extension if not exists <name>;` at the top of your
+   migration. `gen_random_uuid()` is core and needs nothing, while
+   `gen_random_bytes()` is pgcrypto and reads identical; that exact confusion
+   failed every build of a live app. `npm run build` runs migrations BEFORE
+   compiling, so one migration that cannot run takes down the whole deploy.
 
 `lib/supabase/*` exists for projects provisioned with Supabase (env vars
 `NEXT_PUBLIC_SUPABASE_URL` etc.). Use it only when those vars are present.
