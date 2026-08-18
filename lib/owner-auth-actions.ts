@@ -25,10 +25,14 @@ export async function verifyOwnerPasscode(
     await new Promise((r) => setTimeout(r, 800));
     return { error: "That passcode isn't right — check the Keys panel in your workspace." };
   }
+  // SameSite=None (with Secure) is required: the owner views this app inside
+  // their EndpointLabs workspace preview, which frames it cross-site. A Lax
+  // cookie is never sent in that iframe, so the owner was re-asked for the
+  // passcode on every workspace refresh (Michelle, 2026-08-18).
   (await cookies()).set(OWNER_COOKIE, ownerSessionToken(passcode), {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
+    secure: true,
+    sameSite: "none",
     maxAge: 60 * 60 * 24 * 30,
     path: "/",
   });
