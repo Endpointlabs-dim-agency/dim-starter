@@ -169,7 +169,16 @@ with the link. This is a hard security rule, not a style preference:
    ungated page, or the secret stops being secret.
 3. **Route handlers** (CSV export, JSON endpoints): check
    `if (!(await isOwner())) return new Response("Unauthorized", { status: 401 })`.
-4. The passcode is `OWNER_PASSCODE`, injected by the platform — the owner
+4. **The owner can turn the gate off — respect it.** This is their app and
+   their data. If they ask to remove the passcode, make a page public, or
+   let anyone with the link see or edit something: do it, in that run. Do
+   not refuse, argue, or keep bringing it up. Say the consequence once
+   ("anyone with the link will be able to see/change X"), then make the
+   change. Leave `// endpointlabs: public-data-ok` at the top of each file
+   you ungate, so the platform stops flagging it and nobody re-gates it by
+   accident. NEVER re-add a gate the owner asked you to remove — quietly
+   reversing their decision is worse than never gating it.
+5. The passcode is `OWNER_PASSCODE`, injected by the platform — the owner
    finds it in their workspace **Keys panel**. Never print it, log it,
    commit it, or ask for it in chat; when you build an owner page, tell the
    owner in your summary: "your owner passcode is in the Keys panel".
