@@ -121,16 +121,77 @@ export function PreviewBridge() {
     // parent is safe.
     if (window.parent === window) return () => mo.disconnect();
     let lastErrorAt = 0;
-    const report = (type: string) => {
+    let lastDetailAt = 0;
+    const report = (
+      type: string,
+      detail?: { message: string; source?: string },
+    ) => {
       for (const origin of ALLOWED_PARENTS)
-        window.parent.postMessage({ type }, origin);
+        window.parent.postMessage(detail ? { type, detail } : { type }, origin);
     };
-    const onError = () => {
+    // Crash reports now CARRY the error text (epl-app-error detail): the
+    // workspace forwards it into the builder's runtime error capture so the
+    // AI sees what actually broke in the browser. The mask signal itself is
+    // unchanged; detail is throttled so a crash loop can't flood anyone.
+    const reportCrash = (message?: string, source?: string) => {
       lastErrorAt = Date.now();
-      report("epl-app-error");
+      const msg = (message ?? "").trim();
+      if (msg && Date.now() - lastDetailAt > 2000) {
+        lastDetailAt = Date.now();
+        report("epl-app-error", {
+          message: msg.slice(0, 500),
+          ...(source ? { source: source.slice(0, 200) } : {}),
+        });
+      } else {
+        report("epl-app-error");
+      }
+    };
+    const onError = (e: Event) => {
+      if (e instanceof ErrorEvent) {
+        const src = e.filename
+          ? `${e.filename.split("/").pop()}:${e.lineno}`
+          : undefined;
+        reportCrash(e.message || "Script error", src);
+      } else {
+        const reason = (e as PromiseRejectionEvent).reason;
+        reportCrash(
+          `Unhandled rejection: ${reason instanceof Error ? reason.message : String(reason)}`,
+        );
+      }
     };
     window.addEventListener("error", onError);
     window.addEventListener("unhandledrejection", onError);
+    // Serious console errors (hydration mismatches, render crashes) surface
+    // through console.error, not window.onerror. They ride a SEPARATE
+    // message type that feeds error capture only — never the preview mask,
+    // because a console error doesn't imply the page is unrenderable.
+    const SERIOUS_CONSOLE =
+      /hydration|did not match|Maximum update depth|Cannot read|is not a function|is not defined|Minified React error|Objects are not valid as a React child|Functions cannot be passed/i;
+    const origConsoleError = console.error;
+    console.error = (...args: unknown[]) => {
+      origConsoleError.apply(console, args as []);
+      try {
+        const text = args
+          .map((a) =>
+            a instanceof Error ? a.message : typeof a === "string" ? a : "",
+          )
+          .join(" ")
+          .trim();
+        if (
+          text &&
+          SERIOUS_CONSOLE.test(text) &&
+          Date.now() - lastDetailAt > 2000
+        ) {
+          lastDetailAt = Date.now();
+          report("epl-app-console-error", {
+            message: text.slice(0, 500),
+            source: "console",
+          });
+        }
+      } catch {
+        // reporting must never break the page
+      }
+    };
     const heartbeat = setInterval(() => {
       // Error screens set __eplAppError while mounted — window error
       // events go quiet after the initial throw, but the app is still
@@ -145,6 +206,7 @@ export function PreviewBridge() {
       mo.disconnect();
       window.removeEventListener("error", onError);
       window.removeEventListener("unhandledrejection", onError);
+      console.error = origConsoleError;
       clearInterval(heartbeat);
     };
   }, []);
