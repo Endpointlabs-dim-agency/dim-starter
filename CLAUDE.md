@@ -358,6 +358,29 @@ app's primary brand color. Keep it a rounded square (`rx` about 14 on a
 palette changes. Never leave the placeholder once the business identity
 is known.
 
+## Site assistant (built in, off by default)
+
+Every app ships with an embedded site assistant: a chat bubble
+(`components/assistant-widget.tsx`) that answers visitor questions and
+captures messages, with an owner-gated inbox at `/owner/assistant`. It is
+INVISIBLE until the owner turns it on from their EndpointLabs workspace —
+do not enable it, restyle it, or remove it.
+
+- **Keep `lib/assistant/knowledge.ts` SITE_FACTS current.** Whenever you
+  build or change user-facing content (pages, menus, prices, hours,
+  contact details), update SITE_FACTS to match — one plain-language line
+  per fact, grounded ONLY in what the site actually says. This is how the
+  assistant answers truthfully. Import structured data from lib/ modules;
+  never import from a "use client" component file.
+- The other assistant files (`components/assistant-widget.tsx`,
+  `components/assistant-admin.tsx`, `lib/assistant/store.ts`,
+  `lib/assistant/gateway.ts`, `app/api/assistant/*`,
+  `app/owner/assistant/`) are platform-managed — leave them alone unless
+  the user explicitly asks for assistant changes.
+- Never remove `<AssistantWidget />` from `app/layout.tsx`.
+- The assistant's tables ride `migrations/0002_site_assistant.sql`; its
+  settings live in the database and are owner-controlled.
+
 ## Hard rules
 
 - Server/client boundary (a real customer's first build shipped broken on
