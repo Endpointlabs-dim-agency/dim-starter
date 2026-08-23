@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { assistantStream, type AiMessage } from "@/lib/assistant/gateway";
+import { getSiteText } from "@/lib/assistant/siteReader";
 import {
   assistantSystemPrompt,
   CONTACT_FORM_MARKER,
@@ -73,8 +74,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ limited: true });
   }
 
+  const siteText = await getSiteText(req.nextUrl.origin).catch(() => "");
   const upstream = await assistantStream(history, {
-    system: await assistantSystemPrompt(settings),
+    system: await assistantSystemPrompt(settings, siteText),
     maxTokens: 600,
     temperature: 0.4,
   });
