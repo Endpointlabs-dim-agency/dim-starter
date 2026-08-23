@@ -74,7 +74,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ limited: true });
   }
 
-  const siteText = await getSiteText(req.nextUrl.origin).catch(() => "");
+  // Behind proxies (Vercel, the live-preview session) the parsed request
+  // origin is not reliably the public host — build it from forwarded
+  // headers, same lesson as the owner-unlock relative redirect.
+  const readerHost =
+    req.headers.get("x-forwarded-host") ?? req.headers.get("host");
+  const readerProto = req.headers.get("x-forwarded-proto") ?? "https";
+  const siteText = readerHost
+    ? await getSiteText(`${readerProto}://${readerHost}`).catch(() => "")
+    : "";
   const upstream = await assistantStream(history, {
     system: await assistantSystemPrompt(settings, siteText),
     maxTokens: 600,
