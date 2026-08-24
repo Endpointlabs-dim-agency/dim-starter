@@ -9,7 +9,10 @@ export const runtime = "nodejs";
 export async function GET() {
   if (!(await isOwner()))
     return NextResponse.json({ error: "owner access required" }, { status: 401 });
-  return NextResponse.json({ settings: await getSettings() });
+  // storage tells the platform whether these settings are REAL (stored) or
+  // just defaults from an app with no database yet — a storage-less origin
+  // must never be used as the source of truth.
+  return NextResponse.json({ settings: await getSettings(), storage: hasDb() });
 }
 
 const optionalText = (max: number) =>
