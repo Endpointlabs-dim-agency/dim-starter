@@ -93,9 +93,16 @@ export function AssistantWidget() {
     };
     document.addEventListener("visibilitychange", onVisible);
     window.addEventListener("focus", onVisible);
+    // Embedded contexts (the builder preview iframe) never fire focus
+    // events when settings change beside them — a gentle poll keeps the
+    // bubble honest there too.
+    const timer = setInterval(() => {
+      if (document.visibilityState === "visible") refreshConfig();
+    }, 60_000);
     return () => {
       document.removeEventListener("visibilitychange", onVisible);
       window.removeEventListener("focus", onVisible);
+      clearInterval(timer);
     };
   }, [refreshConfig]);
 
