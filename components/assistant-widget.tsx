@@ -58,6 +58,47 @@ export function AssistantWidget() {
   const visitorKey = useRef<string>("");
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  const refreshConfig = useCallback(() => {
+    fetch("/api/assistant")
+      .then((r) => (r.ok ? r.json() : null))
+      .then(
+        (j: {
+          enabled?: boolean;
+          name?: string;
+          welcome?: string;
+          prompts?: string[];
+          captureEnabled?: boolean;
+          formIntro?: string | null;
+        } | null) => {
+          if (!j) return;
+          if (!j.enabled) {
+            setConfig(null);
+            return;
+          }
+          setConfig({
+            name: j.name || "Assistant",
+            welcome: j.welcome || "Hi! Ask me anything.",
+            prompts: Array.isArray(j.prompts) ? j.prompts : [],
+            captureEnabled: j.captureEnabled !== false,
+            formIntro: j.formIntro ?? null,
+          });
+        },
+      )
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === "visible") refreshConfig();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("focus", onVisible);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("focus", onVisible);
+    };
+  }, [refreshConfig]);
+
   useEffect(() => {
     visitorKey.current = getVisitorKey();
     fetch("/api/assistant")
