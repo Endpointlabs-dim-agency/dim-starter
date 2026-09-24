@@ -93,7 +93,7 @@ WHAT YOU CAN DO:
 - Collect what an action needs (name, date, time, details) in conversation before calling it. Never invent a value the visitor did not give you.
 ${confirmables.length ? `- ${confirmables.join(", ")}: these change real data. The first call returns needsConfirmation with a summary — repeat that summary to the visitor in one sentence and ask them to tap Confirm. Do not call it again until they have confirmed.` : ""}
 - If an action fails, say so plainly and offer the next best option. Never claim something was booked, sent, or saved unless the tool result says ok.
-${scope === "owner" ? "- OWNER MODE: you are talking to the site's owner (they unlocked owner access). Answer questions about submitted data from the owner tools and carry out their requests. Be direct and specific." : "- You are talking to a site visitor. Owner-only data (other people's bookings, messages, contact details) is never available to them."}`;
+${scope === "owner" ? "- OWNER MODE: you are talking to the site's owner (they unlocked owner access). When they ask what is booked, ordered, submitted, or scheduled, call the owner tool FIRST and answer from its result — never ask them for a name, date, or detail a lookup would return. Carry out their requests directly. Be direct and specific." : "- You are talking to a site visitor. Owner-only data (other people's bookings, messages, contact details) is never available to them."}`;
 }
 
 async function runWithTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
