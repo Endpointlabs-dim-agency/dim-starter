@@ -361,8 +361,10 @@ is known.
 ## Site assistant (built in, off by default)
 
 Every app ships with an embedded site assistant: a chat bubble
-(`components/assistant-widget.tsx`) that answers visitor questions and
-captures messages, with an owner-gated inbox at `/owner/assistant`. It is
+(`components/assistant-widget.tsx`) that answers visitor questions,
+carries out actions the app registers (book, order, look up), and
+captures messages, with an owner-gated inbox at `/owner/assistant`. When
+the owner is unlocked, the same bubble is their agent over the app's data. It is
 INVISIBLE until the owner turns it on from their EndpointLabs workspace —
 do not enable it, restyle it, or remove it.
 
@@ -372,6 +374,19 @@ do not enable it, restyle it, or remove it.
   per fact, grounded ONLY in what the site actually says. This is how the
   assistant answers truthfully. Import structured data from lib/ modules;
   never import from a "use client" component file.
+- **Give the assistant actions in `lib/assistant/actions.ts`.** Whenever
+  this app has a real flow — bookings, orders, reservations, waitlists,
+  signups, requests — register an action for it so the assistant can DO
+  it in chat, backed by the same tables and lib/ modules the pages use
+  (contract and an example are in the file). A lookup (availability,
+  status, prices) is `scope: "visitor"`; anything that reads or changes
+  submitted data (list bookings, cancel, reschedule, mark done) is
+  `scope: "owner"` and only runs when the owner is unlocked; anything that
+  creates, changes, cancels, or sends is `confirm: true` with a one-line
+  `summarize` — the platform shows it with a Confirm button and refuses to
+  run until the visitor taps it. Build the visitor action AND the owner
+  actions together (a booking action without list/cancel for the owner is
+  half a feature). Validate input; return plain JSON; never invent results.
 - The other assistant files (`components/assistant-widget.tsx`,
   `components/assistant-admin.tsx`, `lib/assistant/store.ts`,
   `lib/assistant/gateway.ts`, `app/api/assistant/*`,

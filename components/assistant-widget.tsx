@@ -52,6 +52,10 @@ export function AssistantWidget() {
   const [input, setInput] = useState("");
   const [state, setState] = useState<ChatState>("idle");
   const [showForm, setShowForm] = useState(false);
+  // An action waiting on the visitor's Confirm tap, and the action currently
+  // running (shown as a quiet status line under the reply).
+  const [pendingConfirm, setPendingConfirm] = useState<{ name: string; summary: string } | null>(null);
+  const [activity, setActivity] = useState<string | null>(null);
   const [formDone, setFormDone] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [formBusy, setFormBusy] = useState(false);
@@ -139,7 +143,7 @@ export function AssistantWidget() {
   }, [messages, state, showForm, formDone]);
 
   const send = useCallback(
-    async (text: string) => {
+    async (text: string, confirm?: { name: string }) => {
       const trimmed = text.trim();
       if (!trimmed || state === "streaming" || !config) return;
       if (!visitorKey.current) visitorKey.current = getVisitorKey();
@@ -148,6 +152,8 @@ export function AssistantWidget() {
       setInput("");
       setState("streaming");
       setFormDone(false);
+      setPendingConfirm(null);
+      setActivity(null);
 
       try {
         const res = await fetch("/api/assistant", {
@@ -156,6 +162,7 @@ export function AssistantWidget() {
           body: JSON.stringify({
             messages: nextMessages.slice(-8),
             visitorKey: visitorKey.current,
+            confirm,
           }),
         });
 
@@ -191,7 +198,15 @@ export function AssistantWidget() {
               limited?: boolean;
               done?: boolean;
               error?: boolean;
+              confirm?: { name?: string; summary?: string };
+              action?: { label?: string; status?: string };
             };
+            if (evt.confirm?.name && evt.confirm.summary)
+              setPendingConfirm({ name: evt.confirm.name, summary: evt.confirm.summary });
+            if (evt.action)
+              setActivity(
+                evt.action.status === "running" ? `${evt.action.label ?? "Working"}…` : null,
+              );
             if (evt.t) {
               reply += evt.t;
               const display = reply.split("[[CONTACT_FORM]]").join("");
@@ -218,6 +233,7 @@ export function AssistantWidget() {
         }
         if (buf) handleLine(buf);
 
+        setActivity(null);
         if (!reply && sawError) {
           setMessages(nextMessages);
           setState("error");
@@ -225,6 +241,7 @@ export function AssistantWidget() {
           setState("idle");
         }
       } catch {
+        setActivity(null);
         setMessages((m) => m.filter((msg, i) => !(i === m.length - 1 && msg.role === "assistant" && !msg.content)));
         setState("error");
       }
@@ -347,6 +364,36 @@ export function AssistantWidget() {
                   ) : null)}
               </div>
             ))}
+
+            {activity && state === "streaming" && (
+              <div className="flex items-center gap-2 px-1 text-xs text-muted-foreground">
+                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-primary" />
+                {activity}
+              </div>
+            )}
+
+            {pendingConfirm && state !== "streaming" && (
+              <div className="rounded-xl border border-border bg-card p-3 text-sm">
+                <p className="text-foreground">{pendingConfirm.summary}</p>
+                <div className="mt-2.5 flex gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={() => void send("Yes, go ahead.", { name: pendingConfirm.name })}
+                  >
+                    Confirm
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setPendingConfirm(null)}
+                  >
+                    Not now
+                  </Button>
+                </div>
+              </div>
+            )}
 
             {state === "limited" && (
               <div className="max-w-[85%] break-words rounded-2xl rounded-tl-sm bg-muted/40 px-3.5 py-2.5 text-sm">

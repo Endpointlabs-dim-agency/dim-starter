@@ -7,6 +7,9 @@ export interface AssistantTurn {
   role: "user" | "assistant";
   content: string;
   at: string;
+  // Set on the note recorded when the assistant ran an action for this
+  // visitor — the per-visitor daily action cap counts these.
+  action?: { name: string; ok: boolean };
 }
 
 export interface AssistantSettings {
@@ -157,6 +160,22 @@ export async function countVisitorMessagesToday(visitorKey: string): Promise<num
     let n = 0;
     for (const row of rows) {
       n += parseTurns(row.transcript).filter((t) => t.role === "user").length;
+    }
+    return n;
+  } catch {
+    return 0;
+  }
+}
+
+export async function countVisitorActionsToday(visitorKey: string): Promise<number> {
+  if (!hasDb()) return 0;
+  try {
+    const rows = await db()`
+      select transcript from assistant_conversations
+      where visitor_key = ${visitorKey} and created_at >= now()::date`;
+    let n = 0;
+    for (const row of rows) {
+      n += parseTurns(row.transcript).filter((t) => t.action?.ok).length;
     }
     return n;
   } catch {

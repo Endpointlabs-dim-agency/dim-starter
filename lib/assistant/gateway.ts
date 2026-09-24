@@ -8,14 +8,46 @@ const GATEWAY_URL =
   process.env.ENDPOINTLABS_AI_URL ??
   "https://app.endpointlabs.io/api/ai-gateway/messages";
 
+export interface AiTextBlock {
+  type: "text";
+  text: string;
+}
+export interface AiToolUseBlock {
+  type: "tool_use";
+  id: string;
+  name: string;
+  input: Record<string, unknown>;
+}
+export interface AiToolResultBlock {
+  type: "tool_result";
+  tool_use_id: string;
+  content: string;
+  is_error?: boolean;
+}
+export type AiContentBlock = AiTextBlock | AiToolUseBlock | AiToolResultBlock;
+
 export interface AiMessage {
   role: "user" | "assistant";
-  content: string;
+  content: string | AiContentBlock[];
+}
+
+export interface AiTool {
+  name: string;
+  description: string;
+  input_schema: Record<string, unknown>;
 }
 
 export async function assistantStream(
   messages: AiMessage[],
-  opts: { system?: string; maxTokens?: number; temperature?: number } = {},
+  opts: {
+    system?: string;
+    maxTokens?: number;
+    temperature?: number;
+    tools?: AiTool[];
+    // "fast" answers questions; "actions" is the tool-capable lane the
+    // platform routes to its agentic model.
+    model?: "fast" | "actions";
+  } = {},
 ): Promise<Response> {
   const key = process.env.ENDPOINTLABS_AI_KEY;
   if (!key)
@@ -29,13 +61,14 @@ export async function assistantStream(
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      model: "fast",
+      model: opts.model ?? "fast",
       system: opts.system,
       messages,
       max_tokens: opts.maxTokens ?? 1024,
       temperature: opts.temperature,
       stream: true,
       purpose: "assistant",
+      tools: opts.tools && opts.tools.length ? opts.tools : undefined,
     }),
   });
 }
