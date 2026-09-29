@@ -387,6 +387,12 @@ do not enable it, restyle it, or remove it.
   run until the visitor taps it. Build the visitor action AND the owner
   actions together (a booking action without list/cancel for the owner is
   half a feature). Validate input; return plain JSON; never invent results.
+  Each action's `description` is shown to the OWNER in their settings panel
+  (with an on/off switch) as well as to the model — write it as one plain
+  sentence a business owner understands ("Book an open appointment time for
+  the visitor"), never as a code comment. The owner can switch any action
+  off there; when they ask for a new one ("Let the assistant…"), register
+  it here like any feature.
 - The other assistant files (`components/assistant-widget.tsx`,
   `components/assistant-admin.tsx`, `lib/assistant/store.ts`,
   `lib/assistant/gateway.ts`, `app/api/assistant/*`,

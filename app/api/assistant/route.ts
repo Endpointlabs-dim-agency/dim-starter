@@ -67,11 +67,14 @@ interface ChatBody {
 const humanize = (name: string) =>
   name.replace(/_/g, " ").replace(/^\w/, (c) => c.toUpperCase());
 
-function toolsFor(scope: ActionScope): { actions: AssistantAction[]; tools: AiTool[] } {
+function toolsFor(scope: ActionScope, disabled: string[] = []): { actions: AssistantAction[]; tools: AiTool[] } {
   const seen = new Set<string>();
   const actions = ACTIONS.filter((a) => {
     if (!/^[a-z][a-z0-9_]{1,40}$/.test(a.name) || seen.has(a.name)) return false;
     seen.add(a.name);
+    // Owner-disabled actions (settings panel) simply don't exist to the
+    // assistant — no tool, no mention.
+    if (disabled.includes(a.name)) return false;
     return a.scope === "visitor" || scope === "owner";
   });
   return {
@@ -143,7 +146,7 @@ export async function POST(req: NextRequest) {
   }
 
   const scope: ActionScope = (await isOwner().catch(() => false)) ? "owner" : "visitor";
-  const { actions, tools } = toolsFor(scope);
+  const { actions, tools } = toolsFor(scope, settings.disabledActions);
   const confirmedName =
     typeof body.confirm?.name === "string" ? body.confirm.name : null;
 

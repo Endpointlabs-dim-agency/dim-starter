@@ -44,10 +44,14 @@ export function AssistantAdmin({
   leads,
   conversations,
   settings,
+  actions = [],
 }: {
   leads: AssistantLead[];
   conversations: AssistantConversation[];
   settings: AssistantSettings;
+  // What the assistant can DO on this app (lib/assistant/actions.ts),
+  // shown with an on/off switch each. Built per app by the builder.
+  actions?: Array<{ name: string; description: string; scope: "visitor" | "owner"; confirm: boolean }>;
 }) {
   const router = useRouter();
   const [busyLead, setBusyLead] = useState<string | null>(null);
@@ -61,6 +65,7 @@ export function AssistantAdmin({
   const [extraKnowledge, setExtraKnowledge] = useState(settings.extraKnowledge ?? "");
   const [formIntro, setFormIntro] = useState(settings.formIntro ?? "");
   const [captureEnabled, setCaptureEnabled] = useState(settings.captureEnabled);
+  const [disabledActions, setDisabledActions] = useState<string[]>(settings.disabledActions ?? []);
   const [saveNote, setSaveNote] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -101,6 +106,7 @@ export function AssistantAdmin({
           extraKnowledge: extraKnowledge.trim() || null,
           formIntro: formIntro.trim() || null,
           captureEnabled,
+          disabledActions,
         }),
       });
       const j = (await res.json().catch(() => null)) as { ok?: boolean; error?: string } | null;
@@ -227,6 +233,54 @@ export function AssistantAdmin({
 
         <TabsContent value="settings" className="mt-4">
           <form onSubmit={saveSettingsForm} className="max-w-lg space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="font-display text-lg">What it can do</CardTitle>
+                <CardDescription>
+                  Actions the assistant can take on this site. Switch any off to
+                  keep it answer-only. Want it to do something new? Ask your
+                  builder: &ldquo;Let the assistant&hellip;&rdquo;
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {actions.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">
+                    No actions yet — it answers questions from your site. Ask your
+                    builder to let it book, order, or look things up.
+                  </p>
+                ) : (
+                  actions.map((a) => {
+                    const on = !disabledActions.includes(a.name);
+                    const label = a.name.replace(/_/g, " ").replace(/^\w/, (c) => c.toUpperCase());
+                    return (
+                      <div
+                        key={a.name}
+                        className="flex items-center justify-between gap-3 rounded-lg border border-border px-3 py-2.5"
+                      >
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium">
+                            {label}
+                            <span className="ml-2 text-[11px] font-normal uppercase tracking-wide text-muted-foreground">
+                              {a.scope === "owner" ? "owner only" : "visitors"}
+                              {a.confirm ? " · asks to confirm" : ""}
+                            </span>
+                          </p>
+                          <p className="text-xs text-muted-foreground">{a.description}</p>
+                        </div>
+                        <Switch
+                          checked={on}
+                          onCheckedChange={(v) =>
+                            setDisabledActions((d) =>
+                              v ? d.filter((n) => n !== a.name) : [...d, a.name],
+                            )
+                          }
+                        />
+                      </div>
+                    );
+                  })
+                )}
+              </CardContent>
+            </Card>
             <Card>
               <CardHeader>
                 <CardTitle className="font-display text-lg">Personality</CardTitle>

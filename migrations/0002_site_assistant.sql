@@ -30,5 +30,6 @@ create table if not exists assistant_settings (
   custom_instructions text,
   extra_knowledge text,
   form_intro text,
-  capture_enabled boolean not null default true
+  capture_enabled boolean not null default true,
+  disabled_actions jsonb
 );

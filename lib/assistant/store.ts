@@ -23,6 +23,9 @@ export interface AssistantSettings {
   extraKnowledge: string | null;
   formIntro: string | null;
   captureEnabled: boolean;
+  // Action names the owner switched off in the settings panel. The chat
+  // route hides them from the assistant; the panel shows them as off.
+  disabledActions: string[];
 }
 
 // enabled:false — a brand-new app has no settings row (often no database
@@ -38,7 +41,35 @@ export const DEFAULT_SETTINGS: AssistantSettings = {
   extraKnowledge: null,
   formIntro: null,
   captureEnabled: true,
+  disabledActions: [],
 };
+
+// The disabled_actions column arrived after the first apps shipped
+// (2026-09-29); apps install their migration once, so the store adds the
+// column itself on first use rather than depending on a renumbered
+// migration in every repo. Idempotent; cached per process.
+let actionsColumnReady: Promise<void> | null = null;
+function ensureActionsColumn(): Promise<void> {
+  if (!actionsColumnReady)
+    actionsColumnReady = db()`alter table assistant_settings add column if not exists disabled_actions jsonb`
+      .then(() => undefined)
+      .catch(() => {
+        actionsColumnReady = null;
+      });
+  return actionsColumnReady;
+}
+
+function parseNames(value: unknown): string[] {
+  let v = value;
+  if (typeof v === "string") {
+    try {
+      v = JSON.parse(v) as unknown;
+    } catch {
+      return [];
+    }
+  }
+  return Array.isArray(v) ? v.filter((x): x is string => typeof x === "string") : [];
+}
 
 function parsePrompts(value: unknown): string[] | null {
   let v = value;
@@ -97,10 +128,11 @@ function parseTurns(value: unknown): AssistantTurn[] {
 export async function getSettings(): Promise<AssistantSettings> {
   if (!hasDb()) return DEFAULT_SETTINGS;
   try {
+    await ensureActionsColumn();
     const rows = await db()`
       select notify_email, enabled, assistant_name, welcome_message,
              quick_prompts, tone, custom_instructions, extra_knowledge,
-             form_intro, capture_enabled
+             form_intro, capture_enabled, disabled_actions
       from assistant_settings where id = 1`;
     if (!rows.length) return DEFAULT_SETTINGS;
     const r = rows[0];
@@ -118,6 +150,7 @@ export async function getSettings(): Promise<AssistantSettings> {
       extraKnowledge: (r.extra_knowledge as string | null) ?? null,
       formIntro: (r.form_intro as string | null) ?? null,
       captureEnabled: r.capture_enabled === null ? true : Boolean(r.capture_enabled),
+      disabledActions: parseNames(r.disabled_actions),
     };
   } catch {
     return DEFAULT_SETTINGS;
@@ -126,18 +159,20 @@ export async function getSettings(): Promise<AssistantSettings> {
 
 export async function saveSettings(s: AssistantSettings): Promise<void> {
   const sql = db();
+  await ensureActionsColumn();
   const prompts = s.quickPrompts?.length
     ? sql.json(s.quickPrompts as unknown as Parameters<typeof sql.json>[0])
     : null;
+  const disabled = sql.json((s.disabledActions ?? []) as unknown as Parameters<typeof sql.json>[0]);
   await sql`
     insert into assistant_settings
       (id, notify_email, enabled, assistant_name, welcome_message,
        quick_prompts, tone, custom_instructions, extra_knowledge,
-       form_intro, capture_enabled)
+       form_intro, capture_enabled, disabled_actions)
     values
       (1, ${s.notifyEmail}, ${s.enabled}, ${s.assistantName},
        ${s.welcomeMessage}, ${prompts}, ${s.tone}, ${s.customInstructions},
-       ${s.extraKnowledge}, ${s.formIntro}, ${s.captureEnabled})
+       ${s.extraKnowledge}, ${s.formIntro}, ${s.captureEnabled}, ${disabled})
     on conflict (id) do update set
       notify_email = ${s.notifyEmail},
       enabled = ${s.enabled},
@@ -148,7 +183,8 @@ export async function saveSettings(s: AssistantSettings): Promise<void> {
       custom_instructions = ${s.customInstructions},
       extra_knowledge = ${s.extraKnowledge},
       form_intro = ${s.formIntro},
-      capture_enabled = ${s.captureEnabled}`;
+      capture_enabled = ${s.captureEnabled},
+      disabled_actions = ${disabled}`;
 }
 
 export async function countVisitorMessagesToday(visitorKey: string): Promise<number> {

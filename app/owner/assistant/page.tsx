@@ -1,6 +1,7 @@
 import { OwnerGate } from "@/components/owner-gate";
 import { AssistantAdmin } from "@/components/assistant-admin";
 import { getSettings, listConversations, listLeads } from "@/lib/assistant/store";
+import { ACTIONS } from "@/lib/assistant/actions";
 
 export const dynamic = "force-dynamic";
 
@@ -18,7 +19,18 @@ async function AdminLoader() {
     listConversations(),
     getSettings(),
   ]);
+  const actions = ACTIONS.map((a) => ({
+    name: a.name,
+    description: a.description,
+    scope: a.scope,
+    confirm: Boolean(a.confirm),
+  }));
   return (
-    <AssistantAdmin leads={leads} conversations={conversations} settings={settings} />
+    <AssistantAdmin
+      leads={leads}
+      conversations={conversations}
+      settings={settings}
+      actions={actions}
+    />
   );
 }

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { isOwner } from "@/lib/owner-auth";
 import { getSettings, saveSettings } from "@/lib/assistant/store";
+import { ACTIONS } from "@/lib/assistant/actions";
 import { hasDb } from "@/lib/db";
 
 export const runtime = "nodejs";
@@ -12,7 +13,17 @@ export async function GET() {
   // storage tells the platform whether these settings are REAL (stored) or
   // just defaults from an app with no database yet — a storage-less origin
   // must never be used as the source of truth.
-  return NextResponse.json({ settings: await getSettings(), storage: hasDb() });
+  const settings = await getSettings();
+  // What the assistant can do on THIS app, for the owner's panel: the
+  // registry the build agent maintains, with the owner's on/off state.
+  const actions = ACTIONS.map((a) => ({
+    name: a.name,
+    description: a.description,
+    scope: a.scope,
+    confirm: Boolean(a.confirm),
+    enabled: !settings.disabledActions.includes(a.name),
+  }));
+  return NextResponse.json({ settings, storage: hasDb(), actions });
 }
 
 const optionalText = (max: number) =>
@@ -31,6 +42,7 @@ const settingsSchema = z.object({
   extraKnowledge: optionalText(2000),
   formIntro: optionalText(200),
   captureEnabled: z.boolean().optional(),
+  disabledActions: z.array(z.string().trim().min(1).max(60)).max(50).optional(),
 });
 
 export async function POST(req: NextRequest) {
@@ -67,6 +79,7 @@ export async function POST(req: NextRequest) {
     extraKnowledge: text(d.extraKnowledge, current.extraKnowledge),
     formIntro: text(d.formIntro, current.formIntro),
     captureEnabled: d.captureEnabled ?? current.captureEnabled,
+    disabledActions: d.disabledActions ?? current.disabledActions,
   });
   return NextResponse.json({ ok: true });
 }
