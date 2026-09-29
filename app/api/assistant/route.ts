@@ -87,10 +87,17 @@ function toolsFor(scope: ActionScope, disabled: string[] = []): { actions: Assis
   };
 }
 
-function actionRules(scope: ActionScope, actions: AssistantAction[]): string {
-  if (!actions.length) return "";
+function actionRules(scope: ActionScope, actions: AssistantAction[], disabled: string[] = []): string {
+  // Absent tools are the dangerous case: with booking switched off, the
+  // assistant once told a visitor "you're all set — see you then" with
+  // nothing booked (2026-09-29). Name what it CANNOT do, explicitly.
+  const offList = ACTIONS.filter((a) => disabled.includes(a.name) && a.scope === "visitor").map((a) => a.name);
+  const cannot = `
+WHAT YOU CANNOT DO:
+- You can only act through the tools you have been given. If no tool exists for what the visitor asks (${offList.length ? `for example ${offList.map((n) => n.replace(/_/g, " ")).join(", ")} — switched off by the owner` : "booking, ordering, changing anything, sending anything"}), say plainly that you can't do that here right now and point them to the site's own page or contact details. NEVER say something is booked, ordered, saved, sent, or done unless a tool result in THIS conversation says ok.`;
+  if (!actions.length) return cannot;
   const confirmables = actions.filter((a) => a.confirm).map((a) => a.name);
-  return `
+  return `${cannot}
 WHAT YOU CAN DO:
 - You have tools that act on this site (${actions.map((a) => a.name).join(", ")}). Use them whenever the visitor wants something done, and use them to look facts up instead of guessing. Say what you did in plain words afterwards.
 - Collect what an action needs (name, date, time, details) in conversation before calling it. Never invent a value the visitor did not give you.
@@ -160,7 +167,7 @@ export async function POST(req: NextRequest) {
     ? await getSiteText(`${readerProto}://${readerHost}`).catch(() => "")
     : "";
   const system =
-    (await assistantSystemPrompt(settings, siteText)) + actionRules(scope, actions);
+    (await assistantSystemPrompt(settings, siteText)) + actionRules(scope, actions, settings.disabledActions);
 
   const userTurn = history[history.length - 1].content as string;
   const startedAt = new Date().toISOString();
