@@ -161,6 +161,12 @@ export function PreviewBridge() {
     };
     window.addEventListener("error", onError);
     window.addEventListener("unhandledrejection", onError);
+    // Tell the workspace this document is going away, so it covers the
+    // preview BEFORE the next document paints. If the next answer is not the
+    // app (e.g. a hosting edge page while the dev server restarts), the
+    // workspace keeps it covered until the app proves itself again.
+    const onPageHide = () => report("epl-nav-start");
+    window.addEventListener("pagehide", onPageHide);
     // Serious console errors (hydration mismatches, render crashes) surface
     // through console.error, not window.onerror. They ride a SEPARATE
     // message type that feeds error capture only — never the preview mask,
@@ -206,6 +212,7 @@ export function PreviewBridge() {
       mo.disconnect();
       window.removeEventListener("error", onError);
       window.removeEventListener("unhandledrejection", onError);
+      window.removeEventListener("pagehide", onPageHide);
       console.error = origConsoleError;
       clearInterval(heartbeat);
     };
