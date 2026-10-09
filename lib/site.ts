@@ -15,8 +15,15 @@ import site from "./site.json";
 //     response carries `X-Robots-Tag: noindex` (next.config.mjs) and pages
 //     render robots noindex, so drafts and placeholders never reach an index.
 
-export type SiteConfig = typeof site & { schemaType: string | null };
+export type SiteConfig = typeof site & { schemaType: string | null; title?: string };
 export const SITE = site as SiteConfig;
+
+// `name` is the business's own name (schema.org, link-preview site name,
+// title suffix); `title` is the homepage search title, which may add the
+// city or a short descriptor. Empty title falls back to the name.
+export function siteTitle(): string {
+  return SITE.title?.trim() || SITE.name;
+}
 
 export function siteUrl(): string {
   const explicit = process.env.NEXT_PUBLIC_SITE_URL?.trim();
@@ -37,16 +44,16 @@ export function siteMetadata(): Metadata {
   const indexable = isIndexable();
   return {
     metadataBase: new URL(siteUrl()),
-    title: { default: SITE.name, template: `%s · ${SITE.name}` },
+    title: { default: siteTitle(), template: `%s · ${SITE.name}` },
     description: SITE.description,
     openGraph: {
       type: "website",
       siteName: SITE.name,
-      title: SITE.name,
+      title: siteTitle(),
       description: SITE.description,
       locale: "en_US",
     },
-    twitter: { card: "summary_large_image", title: SITE.name, description: SITE.description },
+    twitter: { card: "summary_large_image", title: siteTitle(), description: SITE.description },
     // Only the draft state is declared: "index, follow" is the default, and
     // emitting it would conflict with the noindex that owner pages add.
     ...(indexable ? {} : { robots: { index: false, follow: false } }),
@@ -66,7 +73,7 @@ export function pageMetadata({
   path: string;
 }): Metadata {
   const desc = description ?? SITE.description;
-  const ogTitle = title ? `${title} · ${SITE.name}` : SITE.name;
+  const ogTitle = title ? `${title} · ${SITE.name}` : siteTitle();
   // A page-level openGraph object replaces the root one, so the default
   // preview image (app/opengraph-image.tsx) is re-attached here. A route's
   // own opengraph-image file still takes precedence.

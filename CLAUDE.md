@@ -423,7 +423,9 @@ content server-rendered and the facts accurate:
    `<a href="tel:…">`, hours and addresses as text — not only in images.
 2. **Keep `lib/site.json` true.** It drives the site title, description,
    link previews and schema.org markup. Update it whenever the business's
-   identity or facts change: `name`, `description` (one sentence, ≤155
+   identity or facts change: `name` (the business's own name only),
+   `title` (homepage search title, may add the city — empty = name),
+   `description` (one sentence, ≤155
    chars), `schemaType` (the most specific schema.org type —
    `"Restaurant"`, `"Bakery"`, `"HairSalon"`, `"Dentist"`,
    `"GeneralContractor"`, `"LocalBusiness"`, or `"Organization"` for a
