@@ -20,6 +20,13 @@ function collect(dir: string, segments: string[], out: Set<string>) {
   } catch {
     return;
   }
+  // A gated layout (e.g. <OwnerGate> around a whole admin section) makes
+  // every page below it private.
+  const layout = entries.find((e) => e.isFile() && /^layout\.(tsx|ts|jsx|js)$/.test(e.name));
+  if (layout) {
+    const src = fs.readFileSync(path.join(dir, layout.name), "utf8");
+    if (PRIVATE_MARKERS.some((m) => src.includes(m))) return;
+  }
   const page = entries.find((e) => e.isFile() && PAGE_FILE.test(e.name));
   if (page) {
     const src = fs.readFileSync(path.join(dir, page.name), "utf8");

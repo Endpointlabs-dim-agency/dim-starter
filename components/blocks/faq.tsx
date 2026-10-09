@@ -21,7 +21,10 @@ export function Faq({ title = "Frequently asked questions", subtitle, items }: F
         {items.map((f, i) => (
           <AccordionItem key={f.question} value={`item-${i}`}>
             <AccordionTrigger className="text-left">{f.question}</AccordionTrigger>
-            <AccordionContent className="leading-relaxed text-muted-foreground">
+            {/* forceMount: closed answers stay in the server HTML (hidden with
+                CSS) so crawlers see them — Radix unmounts closed content by
+                default, and FAQPage markup must match on-page text. */}
+            <AccordionContent forceMount className="leading-relaxed text-muted-foreground data-[state=closed]:hidden">
               {f.answer}
             </AccordionContent>
           </AccordionItem>
