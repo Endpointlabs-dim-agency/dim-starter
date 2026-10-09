@@ -23,8 +23,10 @@ export function Faq({ title = "Frequently asked questions", subtitle, items }: F
             <AccordionTrigger className="text-left">{f.question}</AccordionTrigger>
             {/* forceMount: closed answers stay in the server HTML (hidden with
                 CSS) so crawlers see them — Radix unmounts closed content by
-                default, and FAQPage markup must match on-page text. */}
-            <AccordionContent forceMount className="leading-relaxed text-muted-foreground data-[state=closed]:hidden">
+                default, and FAQPage markup must match on-page text. The class
+                lands on AccordionContent's INNER div, so it keys off the
+                closed ancestor (in-data-*), not its own data-state. */}
+            <AccordionContent forceMount className="leading-relaxed text-muted-foreground in-data-[state=closed]:hidden">
               {f.answer}
             </AccordionContent>
           </AccordionItem>
