@@ -411,11 +411,13 @@ them. The plumbing is already in place — robots.txt, sitemap.xml, noindex
 until publish, Open Graph image, schema.org markup. Your job is to keep the
 content server-rendered and the facts accurate:
 
-1. **Server-render every public page.** Page files stay server components;
-   put `"use client"` only on small interactive pieces (a form, a carousel,
-   a toggle), never on a page that holds the business's content. Never load
-   public content with `useEffect`/client fetches, `dynamic(..., { ssr:
-   false })`, or behind a loading spinner. The business name, main headline
+1. **Key content must be in the first HTML response.** Server components
+   and `"use client"` components are both rendered on the server, so either
+   is fine. What hides content from crawlers is loading it AFTER the page
+   mounts: never fetch or reveal public content in `useEffect`, client-side
+   fetches, `dynamic(..., { ssr: false })`, or behind a loading spinner.
+   Prefer server pages for public content (they can also export metadata;
+   a `"use client"` file cannot). The business name, main headline
    (exactly one `<h1>` per page), services, prices, hours, service area,
    phone, address and FAQs must be in the HTML the server sends. Phones as
    `<a href="tel:…">`, hours and addresses as text — not only in images.
@@ -438,7 +440,9 @@ content server-rendered and the facts accurate:
    export const metadata = pageMetadata({ title: "Menu", description: "…", path: "/menu" });
    ```
    The homepage omits `title`. Dynamic pages use `generateMetadata` and
-   return `pageMetadata({ … })`. Never set a canonical in `app/layout.tsx`
+   return `pageMetadata({ … })`. A `"use client"` page cannot export
+   metadata — move its interactive part into a component and keep the page
+   file a server component. Never set a canonical in `app/layout.tsx`
    (it would point every page at the homepage).
 4. **Sitemap**: static public pages are listed automatically. Add dynamic
    public pages (e.g. `/menu/tacos`) to `sitemapPaths` in `lib/site.json`.
@@ -492,5 +496,5 @@ content server-rendered and the facts accurate:
 - Never remove or restyle `<MadeWithBadge />` in `app/layout.tsx` — the
   platform controls it per plan (env flag), not per site.
 - Never remove `<SiteJsonLd />` or `siteMetadata()` from `app/layout.tsx`,
-  and never turn a public content page into a client-rendered page — see
-  "Search and AI visibility" above.
+  and never load a public page's content after mount (useEffect, client
+  fetch, `ssr: false`) — see "Search and AI visibility" above.
