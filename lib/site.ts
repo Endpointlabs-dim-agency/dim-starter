@@ -15,7 +15,7 @@ import site from "./site.json";
 //     response carries `X-Robots-Tag: noindex` (next.config.mjs) and pages
 //     render robots noindex, so drafts and placeholders never reach an index.
 
-export type SiteConfig = typeof site & { schemaType: string | null };
+export type SiteConfig = typeof site & { schemaType: string | null; title?: string };
 export const SITE = site as SiteConfig;
 
 // `name` is the business's own name (schema.org, link-preview site name,
