@@ -4,6 +4,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { JsonLd } from "@/components/site-json-ld";
 
 export interface FaqProps {
   title?: React.ReactNode;
@@ -26,6 +27,20 @@ export function Faq({ title = "Frequently asked questions", subtitle, items }: F
           </AccordionItem>
         ))}
       </Accordion>
+      {/* FAQPage markup mirrors the visible Q&A exactly (required by search
+          guidelines). Helps AI assistants quote answers; Google shows FAQ
+          rich results only for government/health sites. */}
+      <JsonLd
+        data={{
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          mainEntity: items.map((f) => ({
+            "@type": "Question",
+            name: f.question,
+            acceptedAnswer: { "@type": "Answer", text: f.answer },
+          })),
+        }}
+      />
     </section>
   );
 }

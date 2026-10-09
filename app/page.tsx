@@ -1,3 +1,8 @@
+import { pageMetadata } from "@/lib/site";
+
+// Every public page exports pageMetadata() with its own path (canonical).
+export const metadata = pageMetadata({ path: "/" });
+
 export default function Home() {
   return (
     <main className="dark grid min-h-screen place-items-center bg-background p-8 text-center text-foreground">

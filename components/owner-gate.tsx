@@ -17,6 +17,9 @@ export async function OwnerGate({
   children: ReactNode;
   title?: string;
 }) {
-  if (await isOwner()) return <>{children}</>;
-  return <OwnerGateForm title={title} />;
+  // noindex for both states: owner pages never belong in search or AI
+  // indexes. React hoists the <meta> into <head>.
+  const noindex = <meta name="robots" content="noindex, nofollow" />;
+  if (await isOwner()) return <>{noindex}{children}</>;
+  return <>{noindex}<OwnerGateForm title={title} /></>;
 }
