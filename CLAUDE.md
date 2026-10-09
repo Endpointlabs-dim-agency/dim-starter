@@ -402,6 +402,66 @@ do not enable it, restyle it, or remove it.
 - The assistant's tables ride `migrations/0002_site_assistant.sql`; its
   settings live in the database and are owner-controlled.
 
+## Search and AI visibility (crawl-ready by default)
+
+Search engines and AI assistants (ChatGPT, Claude, Perplexity, Google)
+read the RAW HTML of each page. Most AI crawlers never run JavaScript, so
+anything that only appears after client-side rendering is invisible to
+them. The plumbing is already in place — robots.txt, sitemap.xml, noindex
+until publish, Open Graph image, schema.org markup. Your job is to keep the
+content server-rendered and the facts accurate:
+
+1. **Key content must be in the first HTML response.** Server components
+   and `"use client"` components are both rendered on the server, so either
+   is fine. What hides content from crawlers is loading it AFTER the page
+   mounts: never fetch or reveal public content in `useEffect`, client-side
+   fetches, `dynamic(..., { ssr: false })`, or behind a loading spinner.
+   Prefer server pages for public content (they can also export metadata;
+   a `"use client"` file cannot). The business name, main headline
+   (exactly one `<h1>` per page), services, prices, hours, service area,
+   phone, address and FAQs must be in the HTML the server sends. Phones as
+   `<a href="tel:…">`, hours and addresses as text — not only in images.
+2. **Keep `lib/site.json` true.** It drives the site title, description,
+   link previews and schema.org markup. Update it whenever the business's
+   identity or facts change: `name`, `description` (one sentence, ≤155
+   chars), `schemaType` (the most specific schema.org type —
+   `"Restaurant"`, `"Bakery"`, `"HairSalon"`, `"Dentist"`,
+   `"GeneralContractor"`, `"LocalBusiness"`, or `"Organization"` for a
+   non-local business; `null` for internal tools/dashboards), `phone`,
+   `email`, `address`, `areaServed`, `openingHours` (schema.org format,
+   e.g. `"Mo-Fr 09:00-17:00"`), `priceRange` (e.g. `"$$"`), `sameAs` (the
+   owner's real social profile URLs). Same truthfulness rule as the page:
+   ONLY values the owner supplied — leave a field empty rather than guess.
+   Keep it consistent with `SITE_FACTS` in `lib/assistant/knowledge.ts`.
+3. **Every public page exports `pageMetadata()`** with its own title,
+   description and path (the path becomes the canonical URL):
+   ```tsx
+   import { pageMetadata } from "@/lib/site";
+   export const metadata = pageMetadata({ title: "Menu", description: "…", path: "/menu" });
+   ```
+   The homepage omits `title`. Dynamic pages use `generateMetadata` and
+   return `pageMetadata({ … })`. A `"use client"` page cannot export
+   metadata — move its interactive part into a component and keep the page
+   file a server component. Never set a canonical in `app/layout.tsx`
+   (it would point every page at the homepage).
+4. **Sitemap**: static public pages are listed automatically. Add dynamic
+   public pages (e.g. `/menu/tacos`) to `sitemapPaths` in `lib/site.json`.
+   Owner-gated pages are excluded automatically.
+5. **FAQs**: use the `Faq` block — it emits matching `FAQPage` markup.
+   Never add `Review` or `AggregateRating` markup for the site's own
+   testimonials (it is not eligible for review stars and can be treated
+   as spam).
+6. **Platform-managed — never edit**: `app/robots.ts`, `app/sitemap.ts`
+   (except via `sitemapPaths`), the `headers()` block in `next.config.mjs`,
+   `app/indexnow.txt/`, `components/site-json-ld.tsx`, and the
+   `NEXT_PUBLIC_SITE_URL` / `SITE_INDEXABLE` env vars. Never add
+   `noindex` to a public page, and never block crawlers in robots.txt —
+   the platform turns indexing on when the owner publishes. If the owner
+   asks to hide the site from search or AI, tell them it is a workspace
+   setting, not a code change.
+7. Images that carry meaning get real `alt` text; decorative images
+   `alt=""`.
+
 ## Hard rules
 
 - Server/client boundary (a real customer's first build shipped broken on
@@ -435,3 +495,6 @@ do not enable it, restyle it, or remove it.
   site's design is fine; keep the postMessage error reporting intact.
 - Never remove or restyle `<MadeWithBadge />` in `app/layout.tsx` — the
   platform controls it per plan (env flag), not per site.
+- Never remove `<SiteJsonLd />` or `siteMetadata()` from `app/layout.tsx`,
+  and never load a public page's content after mount (useEffect, client
+  fetch, `ssr: false`) — see "Search and AI visibility" above.

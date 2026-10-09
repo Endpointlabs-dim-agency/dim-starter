@@ -1,0 +1,19 @@
+{
+  "name": "Your project is underway",
+  "description": "Live project workspace, powered by EndpointLabs.",
+  "schemaType": null,
+  "phone": "",
+  "email": "",
+  "address": {
+    "street": "",
+    "city": "",
+    "region": "",
+    "postalCode": "",
+    "country": "US"
+  },
+  "areaServed": [],
+  "openingHours": [],
+  "priceRange": "",
+  "sameAs": [],
+  "sitemapPaths": []
+}

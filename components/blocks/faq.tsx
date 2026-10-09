@@ -4,6 +4,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { JsonLd } from "@/components/site-json-ld";
 
 export interface FaqProps {
   title?: React.ReactNode;
@@ -20,12 +21,31 @@ export function Faq({ title = "Frequently asked questions", subtitle, items }: F
         {items.map((f, i) => (
           <AccordionItem key={f.question} value={`item-${i}`}>
             <AccordionTrigger className="text-left">{f.question}</AccordionTrigger>
-            <AccordionContent className="leading-relaxed text-muted-foreground">
+            {/* forceMount: closed answers stay in the server HTML (hidden with
+                CSS) so crawlers see them — Radix unmounts closed content by
+                default, and FAQPage markup must match on-page text. The class
+                lands on AccordionContent's INNER div, so it keys off the
+                closed ancestor (in-data-*), not its own data-state. */}
+            <AccordionContent forceMount className="leading-relaxed text-muted-foreground in-data-[state=closed]:hidden">
               {f.answer}
             </AccordionContent>
           </AccordionItem>
         ))}
       </Accordion>
+      {/* FAQPage markup mirrors the visible Q&A exactly (required by search
+          guidelines). Helps AI assistants quote answers; Google shows FAQ
+          rich results only for government/health sites. */}
+      <JsonLd
+        data={{
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          mainEntity: items.map((f) => ({
+            "@type": "Question",
+            name: f.question,
+            acceptedAnswer: { "@type": "Answer", text: f.answer },
+          })),
+        }}
+      />
     </section>
   );
 }
