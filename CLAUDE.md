@@ -30,7 +30,11 @@ CSS approach, or state manager.
   and follow every theme automatically. Write real copy into their props;
   hand-roll custom sections only when a concept genuinely doesn't fit.
   - Marketing/front door: `Navbar` (brand, links, cta) · `Hero` (badge,
-    title, subtitle, ctas, align, media?, stats?) · `FeatureGrid` (features
+    title, subtitle, ctas, align, media?, stats?, backgroundImage?) — for
+    ANY photo behind the headline pass `backgroundImage={{ src, alt }}`: it
+    adds the dark overlay and light text so the headline always reads.
+    Never hand-roll a photo hero (absolute image, -z-10, custom overlay) and
+    never put a background photo in `media` (`media` sits BESIDE the copy) · `FeatureGrid` (features
     w/ lucide icons, 2-4 cols) · `Testimonials` (quote/name/role) ·
     `Pricing` (tiers, highlighted) · `MenuList` (menu/service/price lists
     with sections) · `Faq` (accordion) · `CtaBand` (closing call-to-action)
